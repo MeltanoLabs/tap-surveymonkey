@@ -49,6 +49,7 @@ dev = [
 test = [
     "pytest>=9",
     "pytest-github-actions-annotate-failures>=0.4",
+    "responses>=0.25",
     "singer-sdk[testing]",
 ]
 typing = [
