@@ -130,8 +130,14 @@ class SurveyMonkeyStream(RESTStream):
         context: Context | None,
         next_page_token: Any | None,
     ) -> dict[str, Any]:
-        """Return URL query params, carrying over the next-page cursor."""
-        params: dict[str, Any] = {"per_page": 100}
+        """Return URL query params, carrying over the next-page cursor.
+
+        SurveyMonkey list endpoints allow up to 1000 resources per page, so we
+        request the maximum to minimise round-trips and rate-limit pressure.
+        The ``/responses/bulk`` endpoint caps ``per_page`` at 100 and overrides
+        this in :class:`ResponsesStream`.
+        """
+        params: dict[str, Any] = {"per_page": 1000}
         if next_page_token:
             params.update(parse_qsl(next_page_token.query))
         return params

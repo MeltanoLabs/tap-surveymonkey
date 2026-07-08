@@ -140,6 +140,86 @@ class CollectorsStream(SurveyMonkeyStream):
             row["survey_id"] = context.get("survey_id")
         return row
 
+    @override
+    def get_child_context(
+        self,
+        record: dict,
+        context: Context | None,
+    ) -> dict:
+        """Return context for child streams, keyed by collector and survey."""
+        return {
+            "survey_id": record.get("survey_id"),
+            "collector_id": record["id"],
+        }
+
+
+class RecipientsStream(SurveyMonkeyStream):
+    """Recipients of each collector (email-invite distribution lists).
+
+    Web-link collectors have no recipients and return an empty list.
+
+    https://api.surveymonkey.com/v3/docs#api-endpoints-get-collectors-id-recipients
+    """
+
+    name = "recipients"
+    path = "/collectors/{collector_id}/recipients"
+    primary_keys = ("id",)
+    replication_key = None
+    parent_stream_type = CollectorsStream
+
+    # These fields are only returned when named in the `include` query param.
+    _INCLUDE_FIELDS = (
+        "survey_response_status,mail_status,custom_fields,"
+        "extra_fields,remove_link,survey_link"
+    )
+
+    schema = th.PropertiesList(
+        th.Property("id", th.StringType, description="Recipient ID."),
+        th.Property("collector_id", th.StringType, description="Parent collector ID."),
+        th.Property("survey_id", th.StringType, description="Parent survey ID."),
+        th.Property("email", th.StringType, description="Recipient email address."),
+        th.Property("phone_number", th.StringType, description="Recipient phone."),
+        th.Property("href", th.StringType, description="API resource URL."),
+        th.Property(
+            "survey_response_status",
+            th.StringType,
+            description="How far the recipient got: "
+            "not_responded, partially_responded, completely_responded.",
+        ),
+        th.Property(
+            "mail_status",
+            th.StringType,
+            description="Invite delivery status: sent, not_sent or processing.",
+        ),
+        th.Property("custom_fields", th.ObjectType(additional_properties=True)),
+        th.Property("extra_fields", th.ObjectType(additional_properties=True)),
+        th.Property("remove_link", th.StringType, description="Unsubscribe link."),
+        th.Property("survey_link", th.StringType, description="Survey link in invite."),
+    ).to_dict()
+
+    @override
+    def get_url_params(
+        self,
+        context: Context | None,
+        next_page_token: t.Any | None,
+    ) -> dict[str, t.Any]:
+        """Request the optional recipient fields via the ``include`` param."""
+        params = super().get_url_params(context, next_page_token)
+        params["include"] = self._INCLUDE_FIELDS
+        return params
+
+    @override
+    def post_process(
+        self,
+        row: dict,
+        context: Context | None = None,
+    ) -> dict | None:
+        """Stamp the parent ``collector_id`` and ``survey_id`` onto each row."""
+        if context:
+            row["collector_id"] = context.get("collector_id")
+            row["survey_id"] = context.get("survey_id")
+        return row
+
 
 class ResponsesStream(SurveyMonkeyStream):
     """Survey responses (bulk), including answers.
@@ -185,6 +265,9 @@ class ResponsesStream(SurveyMonkeyStream):
     ) -> dict[str, t.Any]:
         """Add incremental + sort params for the bulk responses endpoint."""
         params = super().get_url_params(context, next_page_token)
+        # The bulk responses endpoint caps per_page at 100 (unlike the 1000
+        # allowed on other list endpoints), so pin it back down here.
+        params["per_page"] = 100
         params["sort_by"] = "date_modified"
         params["sort_order"] = "ASC"
         start = self.get_starting_timestamp(context)

@@ -77,6 +77,24 @@ _COLLECTORS_PAGE = {
     "links": {},
 }
 
+_RECIPIENTS_PAGE = {
+    "data": [
+        {
+            "id": "111222333",
+            "email": "respondent@example.com",
+            "phone_number": "",
+            "href": "https://api.surveymonkey.com/v3/recipients/111222333",
+            "survey_response_status": "completely_responded",
+            "mail_status": "sent",
+            "custom_fields": {},
+            "extra_fields": {},
+            "remove_link": "",
+            "survey_link": "https://www.surveymonkey.com/r/ABC123",
+        },
+    ],
+    "links": {},
+}
+
 _RESPONSES_PAGE = {
     "data": [
         {
@@ -126,6 +144,10 @@ def _mock_surveymonkey_api() -> Iterator[None]:
         rsps.get(
             re.compile(rf"{_HOST}/surveys/[^/]+/collectors(\?.*)?$"),
             json=_COLLECTORS_PAGE,
+        )
+        rsps.get(
+            re.compile(rf"{_HOST}/collectors/[^/]+/recipients(\?.*)?$"),
+            json=_RECIPIENTS_PAGE,
         )
         rsps.get(
             re.compile(rf"{_HOST}/surveys/[^/]+/responses/bulk(\?.*)?$"),

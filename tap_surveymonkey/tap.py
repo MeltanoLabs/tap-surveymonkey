@@ -137,6 +137,7 @@ class TapSurveyMonkey(Tap):
             streams.SurveysStream(self),
             streams.SurveyDetailsStream(self),
             streams.CollectorsStream(self),
+            streams.RecipientsStream(self),
             streams.ResponsesStream(self),
         ]
 

@@ -22,10 +22,12 @@ uv tool install git+https://github.com/MeltanoLabs/tap-surveymonkey.git@main
 | `surveys` | `/surveys` | Full table | — |
 | `survey_details` | `/surveys/{id}/details` | Full table | — |
 | `collectors` | `/surveys/{id}/collectors` | Full table | — |
+| `recipients` | `/collectors/{id}/recipients` | Full table | — |
 | `responses` | `/surveys/{id}/responses/bulk` | Incremental | `date_modified` |
 
 `survey_details`, `collectors` and `responses` are child streams of `surveys`
-and are synced per survey.
+and are synced per survey. `recipients` is a child of `collectors` (synced per
+collector); web-link collectors have no recipients and yield nothing.
 
 ## Configuration
 
