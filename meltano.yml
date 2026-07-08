@@ -1,0 +1,55 @@
+send_anonymous_usage_stats: true
+project_id: "tap-surveymonkey"
+default_environment: test
+requires_meltano: ">=4.0"
+environments:
+- name: test
+plugins:
+  extractors:
+  - name: "tap-surveymonkey"
+    namespace: "tap_surveymonkey"
+    pip_url: -e .
+    capabilities:
+    - state
+    - catalog
+    - discover
+    - about
+    - stream-maps
+    - structured-logging
+
+    settings:
+    - name: access_token
+      label: Access Token
+      description: A SurveyMonkey OAuth access token, used as a bearer token.
+      sensitive: true
+
+    - name: start_date
+      kind: date_iso8601
+      label: Start Date
+      description: Initial date to start extracting responses from (ISO-8601).
+
+    - name: api_url
+      kind: options
+      label: Region
+      value: https://api.surveymonkey.com/v3
+      description: >-
+        Regional SurveyMonkey API host for the account's data-residency region
+        (US default, EU, or CA). Using the wrong region will fail.
+      options:
+      - label: United States
+        value: https://api.surveymonkey.com/v3
+      - label: Europe (EU)
+        value: https://api.eu.surveymonkey.com/v3
+      - label: Canada (CA)
+        value: https://api.surveymonkey.ca/v3
+
+    settings_group_validation:
+    - [access_token]
+
+    config:
+      start_date: '2026-01-01T00:00:00Z'
+
+  loaders:
+  - name: target-jsonl
+    variant: andyh1203
+    pip_url: target-jsonl

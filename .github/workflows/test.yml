@@ -1,0 +1,81 @@
+### A CI workflow template that runs linting and python testing
+### TODO: Modify as needed or as desired.
+
+name: Test tap-surveymonkey
+
+on:
+  push:
+    branches: [main]
+    paths:
+    - .github/workflows/test.yml
+    - tap_surveymonkey/**
+    - tests/**
+    - pyproject.toml
+    - uv.lock
+  pull_request:
+    paths:
+    - .github/workflows/test.yml
+    - tap_surveymonkey/**
+    - tests/**
+    - pyproject.toml
+    - uv.lock
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: 1
+
+permissions:
+  contents: read  # read repository contents
+
+jobs:
+  build-package:
+    name: Build & verify package
+    runs-on: ubuntu-latest
+    outputs:
+      supported-python-versions: ${{ steps.baipp.outputs.supported_python_classifiers_json_array }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: hynek/build-and-inspect-python-package@d44ca7d91762de7a7d5436ddae667c6da6d1c3df # v2.18.0
+        id: baipp
+
+  pytest:
+    name: Test
+    needs: [build-package]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ${{ fromJson(needs.build-package.outputs.supported-python-versions) }}
+    steps:
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        persist-credentials: false
+    - name: Setup uv
+      uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Run Tox
+      run: | # zizmor: ignore[template-injection]
+        uvx --with=tox-uv tox -e ${{ matrix.python-version }}
+
+  typing:
+    name: Type Checking
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        persist-credentials: false
+    - name: Setup uv
+      uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+    - name: Run Tox
+      run: >
+        uvx
+        --managed-python
+        --with=tox-uv
+        tox -e typing
