@@ -139,6 +139,17 @@ class TapSurveyMonkey(Tap):
             streams.CollectorsStream(self),
             streams.RecipientsStream(self),
             streams.ResponsesStream(self),
+            # Normalized / flattened streams (Fivetran-style relational grain).
+            streams.SurveyPagesStream(self),
+            streams.QuestionsStream(self),
+            streams.QuestionHeadingsStream(self),
+            streams.QuestionOptionsStream(self),
+            streams.SubQuestionsStream(self),
+            streams.ResponsePagesStream(self),
+            streams.ResponseAnswersStream(self),
+            # Standalone list streams.
+            streams.ContactsStream(self),
+            streams.SurveyCategoriesStream(self),
         ]
 
 
