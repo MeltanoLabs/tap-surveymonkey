@@ -61,7 +61,25 @@ _SURVEY_DETAILS = {
             "position": 1,
             "question_count": 5,
             "href": f"https://api.surveymonkey.com/v3/surveys/{SURVEY_ID}/pages/1",
-            "questions": [],
+            "questions": [
+                {
+                    "id": "q1",
+                    "position": 1,
+                    "visible": True,
+                    "family": "matrix",
+                    "subtype": "rating",
+                    "headings": [{"heading": "How satisfied are you?"}],
+                    "answers": {
+                        "choices": [
+                            {"id": "c1", "position": 1, "visible": True, "text": "Good"},
+                            {"id": "c2", "position": 2, "visible": True, "text": "Bad"},
+                        ],
+                        "rows": [
+                            {"id": "r1", "position": 1, "visible": True, "text": "Speed"},
+                        ],
+                    },
+                },
+            ],
         },
     ],
 }
@@ -109,8 +127,44 @@ _RESPONSES_PAGE = {
             "custom_variables": {},
             "date_created": "2020-01-02T00:00:00+00:00",
             "date_modified": "2020-01-02T00:00:00+00:00",
-            "pages": [],
+            "pages": [
+                {
+                    "id": "1",
+                    "questions": [
+                        {
+                            "id": "q1",
+                            "answers": [
+                                {"row_id": "r1", "choice_id": "c1"},
+                                {"other_id": "o1", "text": "N/A"},
+                            ],
+                        },
+                    ],
+                },
+            ],
         },
+    ],
+    "links": {},
+}
+
+_CONTACTS_PAGE = {
+    "data": [
+        {
+            "id": "444555666",
+            "first_name": "Ada",
+            "last_name": "Lovelace",
+            "email": "ada@example.com",
+            "phone_number": "",
+            "status": "active",
+            "custom_fields": {},
+            "href": "https://api.surveymonkey.com/v3/contacts/444555666",
+        },
+    ],
+    "links": {},
+}
+
+_SURVEY_CATEGORIES_PAGE = {
+    "data": [
+        {"id": "customer_feedback", "name": "Customer Feedback"},
     ],
     "links": {},
 }
@@ -152,5 +206,10 @@ def _mock_surveymonkey_api() -> Iterator[None]:
         rsps.get(
             re.compile(rf"{_HOST}/surveys/[^/]+/responses/bulk(\?.*)?$"),
             json=_RESPONSES_PAGE,
+        )
+        rsps.get(re.compile(rf"{_HOST}/contacts(\?.*)?$"), json=_CONTACTS_PAGE)
+        rsps.get(
+            re.compile(rf"{_HOST}/survey_categories(\?.*)?$"),
+            json=_SURVEY_CATEGORIES_PAGE,
         )
         yield
